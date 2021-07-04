@@ -1,7 +1,7 @@
 import argparse
 import os, errno
 import sys
-
+import matplotlib.pyplot as plt
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import random as rnd
@@ -9,15 +9,9 @@ import string
 import sys
 from random import sample
 from tqdm import tqdm
-from trdg.string_generator import (
-    create_strings_from_dict,
-    create_strings_from_file,
-    create_strings_from_wikipedia,
-    create_strings_randomly,
-)
-from trdg.utils import load_dict, load_fonts
-from trdg.data_generator import FakeTextDataGenerator
-from multiprocessing import Pool
+
+from trdg.data_generator import generate
+
 
 
 def margins(margin):
@@ -335,111 +329,54 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def main():
-    """
-        Description: Main function
-    """
+def augment(files):
 
-    # Argument parsing
     args = parse_arguments()
 
-    # Create the directory if it does not exist.
-    try:
-        os.makedirs(args.output_dir)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-    # Creating word list
-    if args.dict:
-        lang_dict = []
-        if os.path.isfile(args.dict):
-            with open(args.dict, "r", encoding="utf8", errors="ignore") as d:
-                lang_dict = [l for l in d.read().splitlines() if len(l) > 0]
-        else:
-            sys.exit("Cannot open dict")
-    else:
-        lang_dict = load_dict(args.language)
-
-    # Create font (path) list
-    if args.font_dir:
-        fonts = [
-            os.path.join(args.font_dir, p)
-            for p in os.listdir(args.font_dir)
-            if os.path.splitext(p)[1] == ".ttf"
-        ]
-    elif args.font:
-        if os.path.isfile(args.font):
-            fonts = [args.font]
-        else:
-            sys.exit("Cannot open font")
-    else:
-        fonts = load_fonts(args.language)
-
     # Creating synthetic sentences (or word)
-    strings = []
+    strings = files
 
-    files = os.listdir(args.input_file)
+    #files = os.listdir(args.input_file)
 
-    strings = [os.path.join(args.input_file,x) for x in files]
+    #strings = [os.path.join(args.input_file,x) for x in files]
 
-    fn = os.path.join('fonts','kh')
-    fn = os.path.join(fn,'KohSantepheap-Regular.ttf')
+    fn = ''
 
-    string_count = len(strings)
-
-    p = Pool(args.thread_count)
-    for _ in tqdm(
-        p.imap_unordered(
-            FakeTextDataGenerator.generate_from_tuple,
-            zip(
-                [i for i in range(0, string_count)],
-                strings,
-                [fn for _ in range(0, string_count)],
-                [args.output_dir] * string_count,
-                [args.format] * string_count,
-                [args.extension] * string_count,
-                [args.skew_angle] * string_count,
-                [args.random_skew] * string_count,
-                [args.blur] * string_count,
-                [args.random_blur] * string_count,
-                [args.background] * string_count,
-                [args.distorsion] * string_count,
-                [args.distorsion_orientation] * string_count,
-                [args.handwritten] * string_count,
-                [args.name_format] * string_count,
-                [args.width] * string_count,
-                [args.alignment] * string_count,
-                [args.text_color] * string_count,
-                [args.orientation] * string_count,
-                [args.space_width] * string_count,
-                [args.character_spacing] * string_count,
-                [args.margins] * string_count,
-                [args.fit] * string_count,
-                [args.output_mask] * string_count,
-                [args.word_split] * string_count,
-                [args.image_dir] * string_count,
-                [args.stroke_width] * string_count,
-                [args.stroke_fill] * string_count,
-                [args.image_mode] * string_count,
-            ),
-        ),
-        total=args.count,
-    ):
-        pass
-    p.terminate()
-
-    if args.name_format == 2:
-        # Create file with filename-to-label connections
-        with open(
-            os.path.join(args.output_dir, "labels.txt"), "w", encoding="utf8"
-        ) as f:
-            for i in range(string_count):
-                file_name = str(i) + "." + args.extension
-                if args.space_width == 0:
-                    file_name = file_name.replace(" ", "")
-                f.write("{} {}\n".format(file_name, strings[i]))
-
+    
+    imgs = []
+    #gen = FakeTextDataGenerator()
+    for txt in strings:
+        img = generate(
+                txt,
+                args.format,
+                args.extension,
+                args.skew_angle,
+                args.random_skew,
+                args.blur,
+                args.random_blur,
+                args.background,
+                args.distorsion,
+                args.distorsion_orientation,
+                args.handwritten,
+                args.name_format,
+                args.width,
+                args.alignment,
+                args.text_color,
+                args.orientation,
+                args.space_width,
+                args.character_spacing,
+                args.margins,
+                args.fit,
+                args.output_mask,
+                args.word_split,
+                args.image_dir,
+                args.stroke_width,
+                args.stroke_fill,
+                args.image_mode)
+        imgs.append(img)
+        #plt.imshow(img)
+        #plt.show()
+    return imgs
 
 if __name__ == "__main__":
-    main()
+    imgs = augment(os.listdir('inputs'))
