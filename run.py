@@ -379,4 +379,7 @@ def augment(files):
     return imgs
 
 if __name__ == "__main__":
-    imgs = augment(os.listdir('inputs'))
+    fls = os.listdir('inputs')
+
+    fls= [os.path.join('inputs',f) for f in fls]
+    imgs = augment(fls)

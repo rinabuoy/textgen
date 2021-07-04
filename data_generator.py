@@ -40,13 +40,19 @@ def generate(
     vertical_margin = margin_top + margin_bottom
     txt_img = Image.open(text) .convert("RGBA")   
     data = np.asarray(txt_img).copy()
-    for x in range(data.shape[0]):
-        for y in range(data.shape[1]):
-            if np.all(data[x, y]==255):
-                data[x, y,0]=0
-                data[x, y,1]=0
-                data[x, y,2]=0
-                data[x, y,3]=0
+    mask1 = data[:,:,0] ==255
+    mask2 = data[:,:,1] ==255
+    mask3 = data[:,:,2] ==255
+    mask4 = data[:,:,3] ==255
+
+    data[mask1 & mask2 & mask3 & mask4 ] = 0
+    #for x in range(data.shape[0]):
+    #    for y in range(data.shape[1]):
+    #        if np.all(data[x, y]==255):
+    #            data[x, y,0]=0
+    #            data[x, y,1]=0
+    #            data[x, y,2]=0
+    #            data[x, y,3]=0
     image = Image.fromarray(data)
     #plt.imshow(txt_img)
     mask = Image.new("RGB", txt_img.size, (0, 0, 0))
